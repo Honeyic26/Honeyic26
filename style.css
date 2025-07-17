@@ -83,7 +83,7 @@ body {
 }
 @font-face {
   font-family: 'starborn';
-  src: url('fuentes/Starborn.woff') format('woff');
+  src: url('../fuentes/Starborn.woff') format('woff');
 }
 
 h1 {
