@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carta</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+  
+  <!-- Pantalla fondo (pantalla 1) -->
+  <div class="pantalla activa fondo-carta" id="pantalla-inicial">
+    <div class="contenido-carta">
+      <div class="fondo-blanco">
+        <img src="Imagenes/snoopy.png" class="img-carta">
+        <h1 class="h1-carta">¡Sorpresa!♡</h1>
+        <p class="p-carta">presiona el siguiente botón (ﾉ´ з `)ノ</p>
+        <button class="boton-carta" onclick="mostrarPantallaSobre()">Next!♥︎</button>
+      </div>
+    </div>
+  </div>
+
+<!-- Pantalla sobre (pantalla 2) -->
+  <div class="pantalla fondo-carta" id="pantalla-sobre">
+    <div class="contenido-carta">
+    <div class="fondo-blanco">
+      <img src="Imagenes/sobre-carta.png" alt="Sobre cerrado" class="imagen-sobre">
+      <h2 class="titulo-sobre">¿Quieres abrir la carta? </h2>
+      <div class="botones-sobre">
+      <button onclick="mostrarPantallaCarta()" class="btn-si">Sí</button>
+        <button onclick="mostrarMensajeNo()" class="btn-no">No</button>
+      </div>
+    </div>
+    </div>
+  </div>
+
+<!-- Pantalla Triste (pantalla 3) -->
+<div class="pantalla fondo-carta" id="pantalla-triste">
+  <div class="contenido-carta">
+    <div class="fondo-blanco">
+      <img src="Imagenes/snoopy-triste.png" alt="Snoopy triste" class="imagen-triste">
+      <h2 class="titulo-triste">Waaaa, ponle que sí <br> (っ˘̩╭╮˘̩)っ</h2>
+      <button onclick="volverPantallaSobre()" class="btn-volver">Volver</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pantalla Carta (pantalla 4) -->
+<!-- Pantalla Carta Final (pantalla 4) -->
+<div class="pantalla fondo-carta" id="pantalla-final">
+  <div class="ventana-carta" id="ventana-carta">
+    <div class="barra-superior">
+      <span class="titulo-ventana">OoO un mensaje (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧</span>
+    </div>
+    <div class="contenido-carta-scroll">
+      <p class="formulario-p">
+        Querida persona que está leyendo esto:  
+        <br><br>
+        Gracias por llegar hasta aquí.  
+        Esta cartita fue hecha con mucho cariño, para robarte una sonrisa, para recordarte que eres importante, y que incluso en los días más comunes, algo especial puede aparecer en forma de una ventanita con corazón.
+        <br><br>
+        [Aquí puedes seguir escribiendo todo lo que quieras... el contenido de la carta irá en este espacio, y tendrá scroll si es muy largo ✨]
+        <br><br>
+        💖 Con mucho cariño...
+      </p>
+      
+          <!-- Formulario para recibir un mensaje -->
+<form id="formulario-respuesta" action="https://formspree.io/f/mgvzezrj" method="POST" class="formulario-respuesta">
+  <h3>¿Quieres responderme algo? ♡</h3>
+  <input type="text" name="name" placeholder="Tu nombre" required>
+  <textarea name="message" rows="4" placeholder="Tu mensaje lindo aquí..." required></textarea>
+  <button type="submit">Enviar mensaje</button>
+</form>
+
+<!-- Botón para volver -->
+<div class="boton-cierre">
+  <button onclick="volverAlInicio()">Volver al inicio</button>
+</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function cambiarPantalla(origenId, destinoId) {
+  const origen = document.getElementById(origenId);
+  const destino = document.getElementById(destinoId);
+
+  origen.style.display = "none";
+  origen.classList.remove("activa");
+
+  destino.style.display = "flex";
+  destino.classList.add("activa");
+}
+
+function mostrarPantallaSobre() {
+  cambiarPantalla("pantalla-inicial", "pantalla-sobre");
+}
+
+function mostrarMensajeNo() {
+  cambiarPantalla("pantalla-sobre", "pantalla-triste");
+}
+
+function volverPantallaSobre() {
+  cambiarPantalla("pantalla-triste", "pantalla-sobre");
+}
+
+function mostrarPantallaCarta() {
+  cambiarPantalla("pantalla-sobre", "pantalla-final");
+  
+  const contenidoScroll = document.querySelector(".contenido-carta-scroll");
+contenidoScroll.scrollTop = 0;
+
+  const carta = document.getElementById("ventana-carta");
+  carta.classList.add("animar-carta");
+
+  setTimeout(() => {
+    carta.classList.remove("animar-carta");
+  }, 700); // La duración debe coincidir con la animación CSS
+}
+
+function volverAlInicio() {
+  cambiarPantalla("pantalla-final", "pantalla-inicial");
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const pantallaInicial = document.getElementById("pantalla-inicial");
+  pantallaInicial.style.display = "flex";
+  pantallaInicial.classList.add("activa");
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const formulario = document.getElementById("formulario-respuesta");
+
+  formulario.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    // Enviar formulario manualmente
+    const formData = new FormData(formulario);
+
+    fetch(formulario.action, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Accept: "application/json",
+      },
+    })
+    .then(response => {
+      if (response.ok) {
+        formulario.reset(); // limpiar campos
+        cambiarPantalla("pantalla-final", "pantalla-inicial"); // volver al inicio
+      } else {
+        alert("Hubo un error al enviar. Intenta más tarde 💔");
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Ocurrió un error de red 💥");
+    });
+  });
+});
+</script>
+</body>
+</html>

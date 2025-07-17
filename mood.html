@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calendario Pochacco</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="fondo-mood">
+  <div class="calendario-container">
+    <header>
+      <h1 class="h1-mood">Dime tu mood</h1>
+      <div class="mes-control">
+        <button id="mes-anterior">←</button>
+        <span id="mes-actual">Julio 2025</span>
+        <button id="mes-siguiente">→</button>
+      </div>
+    </header>
+
+    <div class="calendario">
+      <div class="dias-semana">
+        <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+      </div>
+      <div class="dias" id="dias">
+        <!-- Aquí se llenarán los días del mes -->
+      </div>
+    </div>
+  </div>
+</div>
+  <script>
+    for (let i = 1; i <= 31; i++) {
+  const div = document.createElement("div");
+  div.textContent = i;
+  document.querySelector(".dias").appendChild(div);
+}
+  </script>
+</body>
+</html>
