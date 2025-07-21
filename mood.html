@@ -1,38 +1,291 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Calendario Pochacco</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="fondo-mood">
-  <div class="calendario-container">
-    <header>
-      <h1 class="h1-mood">Dime tu mood</h1>
-      <div class="mes-control">
-        <button id="mes-anterior">←</button>
-        <span id="mes-actual">Julio 2025</span>
-        <button id="mes-siguiente">→</button>
-      </div>
-    </header>
 
-    <div class="calendario">
-      <div class="dias-semana">
-        <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendario Mood</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="fondo-mood">
+
+  <div class="calendario-mood">
+    <h1 class="h1-mood">Dime tu mood</h1>
+
+    <!-- Encabezado con mes y flechas -->
+    <div class="calendario-header">
+      <button id="anterior">&#8592;</button>
+      <h2 id="mes-anio">Julio 2025</h2>
+      <button id="siguiente">&#8594;</button>
+    </div>
+
+    <!-- Días de la semana -->
+    <div class="dias-semana">
+      <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span>
+      <span>Jue</span><span>Vie</span><span>Sáb</span>
+    </div>
+
+    <!-- Aquí se generarán los días automáticamente -->
+    <div class="contenido-calendario"></div>
+  </div>
+
+  <!-- Tu pantalla de emojis -->
+  <div class="pantalla-mood" id="pantalla-emojis" style="display:none;">
+    <div class="contenedor-oscuro">
+      <div class="contenido-emoji">
+        <h1 class="h1-mood">¿Cómo te sientes hoy?</h1>
+        <div class="lista-emojis">
+          <img src="Imagenes/feliz.png" class="emoji-img" data-emoji="feliz.png" alt="Feliz">
+          <img src="Imagenes/triste.png" class="emoji-img" data-emoji="triste.png" alt="Triste">
+          <img src="Imagenes/enojado.png" class="emoji-img" data-emoji="enojado.png" alt="Enojado">
+          <img src="Imagenes/sorprendido.png" class="emoji-img" data-emoji="sorprendido.png" alt="Sorprendido">
+          <img src="Imagenes/angustiado.png" class="emoji-img" data-emoji="angustiado.png" alt="Angustiado">
+          <img src="Imagenes/neutral.png" class="emoji-img" data-emoji="neutral.png" alt="Neutral">
+          <img src="Imagenes/chiveado.png" class="emoji-img" data-emoji="chiveado.png" alt="Chiveado">
+          <img src="Imagenes/nervioso.png" class="emoji-img" data-emoji="nervioso.png" alt="Nervioso">
+          <img src="Imagenes/asustado.png" class="emoji-img" data-emoji="asustado.png" alt="Asustado">
+        </div>
       </div>
-      <div class="dias" id="dias">
-        <!-- Aquí se llenarán los días del mes -->
-      </div>
+      <button onclick="volverAlCalendario()" class="btn-cerrar">Cerrar</button>
     </div>
   </div>
-</div>
-  <script>
-    for (let i = 1; i <= 31; i++) {
-  const div = document.createElement("div");
-  div.textContent = i;
-  document.querySelector(".dias").appendChild(div);
-}
-  </script>
+  
+  <!-- Modal de opciones -->
+  <div id="modalOpciones" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #222;
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px black;
+    z-index: 10000;
+    min-width: 220px;
+    text-align: center;
+  ">
+    <p>¿Qué quieres hacer con esta nota?</p>
+    <button id="btnEditar" style="margin: 5px;">Editar</button>
+    <button id="btnEliminar" style="margin: 5px;">Eliminar</button>
+    <button id="btnCancelar" style="margin: 5px;">Cancelar</button>
+  </div>
+  
+  
+<script>
+  const contenedor = document.querySelector('.contenido-calendario');
+  const mesAnioTexto = document.getElementById('mes-anio');
+  const btnAnterior = document.getElementById('anterior');
+  const btnSiguiente = document.getElementById('siguiente');
+
+  const pantallaMood = document.getElementById('pantalla-emojis');
+  const calendarioMood = document.querySelector('.calendario-mood');
+
+  // Crear modal opciones
+  const modalOpciones = document.getElementById('modalOpciones');
+
+  const btnEditar = document.getElementById('btnEditar');
+  const btnEliminar = document.getElementById('btnEliminar');
+  const btnCancelar = document.getElementById('btnCancelar');
+
+  const nombresMeses = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  let fecha = new Date();
+  let diaSeleccionadoGlobal = null;
+  let diaSeleccionadoModal = null;
+
+  function generarCalendario(fechaBase) {
+    contenedor.innerHTML = '';
+    const año = fechaBase.getFullYear();
+    const mes = fechaBase.getMonth();
+    const primerDia = new Date(año, mes, 1).getDay();
+    const diasEnMes = new Date(año, mes + 1, 0).getDate();
+
+    mesAnioTexto.textContent = `${nombresMeses[mes]} ${año}`;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < primerDia; i++) {
+      const espacio = document.createElement('div');
+      espacio.classList.add('vacio');
+      contenedor.appendChild(espacio);
+    }
+
+    for (let dia = 1; dia <= diasEnMes; dia++) {
+      const diaElemento = document.createElement('div');
+      diaElemento.className = 'dia';
+
+      // Aquí está la corrección importante para la clave
+      const claveNota = `mood-${año}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+
+      const notaGuardadaJSON = localStorage.getItem(claveNota);
+      if (notaGuardadaJSON) {
+        const notaGuardada = JSON.parse(notaGuardadaJSON);
+        const imgEmoji = document.createElement('img');
+        imgEmoji.src = `Imagenes/${notaGuardada.emoji}`;
+        imgEmoji.alt = notaGuardada.emoji;
+        imgEmoji.style.width = '20px';
+        imgEmoji.style.height = '20px';
+        imgEmoji.style.display = 'block';
+        imgEmoji.style.margin = '0 auto 5px';
+
+        diaElemento.appendChild(imgEmoji);
+      }
+
+      const textoDia = document.createElement('span');
+      textoDia.textContent = dia;
+      diaElemento.appendChild(textoDia);
+
+      const fechaDelDia = new Date(año, mes, dia);
+      fechaDelDia.setHours(0, 0, 0, 0);
+
+      if (
+        dia === hoy.getDate() &&
+        mes === hoy.getMonth() &&
+        año === hoy.getFullYear()
+      ) {
+        diaElemento.classList.add('hoy');
+      }
+
+      if (fechaDelDia <= hoy) {
+        diaElemento.classList.add('clickable');
+
+        let presionTimer = null;
+        const tiempoPresion = 600;
+        let longPressTriggered = false;
+
+        function abrirModal() {
+          if (localStorage.getItem(claveNota)) {
+            diaSeleccionadoModal = dia;
+            modalOpciones.style.display = 'block';
+            longPressTriggered = true;
+          }
+        }
+
+        diaElemento.addEventListener('mousedown', () => {
+          longPressTriggered = false;
+          presionTimer = setTimeout(abrirModal, tiempoPresion);
+        });
+
+        diaElemento.addEventListener('mouseup', () => {
+          clearTimeout(presionTimer);
+        });
+
+        diaElemento.addEventListener('mouseleave', () => {
+          clearTimeout(presionTimer);
+        });
+
+        diaElemento.addEventListener('touchstart', () => {
+          longPressTriggered = false;
+          presionTimer = setTimeout(abrirModal, tiempoPresion);
+        });
+
+        diaElemento.addEventListener('touchend', () => {
+          clearTimeout(presionTimer);
+        });
+
+        diaElemento.addEventListener('touchmove', () => {
+          clearTimeout(presionTimer);
+        });
+
+        diaElemento.addEventListener('click', (e) => {
+          if (longPressTriggered) {
+            e.preventDefault();
+            return;
+          }
+
+          const existeNota = localStorage.getItem(claveNota);
+          if (existeNota) {
+            const mesActual = fecha.getMonth() + 1;
+            const anioActual = fecha.getFullYear();
+            const url = `mood-notes.html?dia=${dia}&mes=${mesActual}&anio=${anioActual}`;
+            window.location.href = url;
+          } else {
+            mostrarPantallaEmojis(dia);
+          }
+        });
+      } else {
+        diaElemento.classList.add('futuro');
+      }
+
+      contenedor.appendChild(diaElemento);
+    }
+  }
+
+  function mostrarPantallaEmojis(diaSeleccionado) {
+    diaSeleccionadoGlobal = diaSeleccionado;
+    localStorage.setItem("selectedDay", diaSeleccionado);
+    pantallaMood.style.display = 'flex';
+    calendarioMood.style.display = 'none';
+    console.log('Día seleccionado:', diaSeleccionado);
+  }
+
+  // Aquí agregamos el event listener para los emojis
+  const listaEmojis = document.querySelectorAll('.emoji-img');
+
+  listaEmojis.forEach(emoji => {
+    emoji.addEventListener('click', () => {
+      const emojiArchivo = emoji.getAttribute('data-emoji');
+      const mesActual = fecha.getMonth() + 1;
+      const anioActual = fecha.getFullYear();
+      window.location.href = `mood-notes.html?dia=${diaSeleccionadoGlobal}&mes=${mesActual}&anio=${anioActual}&emoji=${emojiArchivo}`;
+    });
+  });
+
+  function volverAlCalendario() {
+    pantallaMood.style.display = 'none';
+    calendarioMood.style.display = 'block';
+  }
+
+  btnAnterior.addEventListener('click', () => {
+    fecha.setMonth(fecha.getMonth() - 1);
+    generarCalendario(fecha);
+  });
+
+  btnSiguiente.addEventListener('click', () => {
+    fecha.setMonth(fecha.getMonth() + 1);
+    generarCalendario(fecha);
+  });
+
+  btnCancelar.addEventListener('click', () => {
+    modalOpciones.style.display = 'none';
+    diaSeleccionadoModal = null;
+  });
+
+  btnEditar.addEventListener('click', () => {
+  modalOpciones.style.display = 'none';
+  if (diaSeleccionadoModal !== null) {
+    const mesActual = fecha.getMonth() + 1;
+    const anioActual = fecha.getFullYear();
+    const url = `mood-notes.html?dia=${diaSeleccionadoModal}&mes=${mesActual}&anio=${anioActual}&editar=true`;
+    window.location.href = url;
+  }
+});
+
+  btnEliminar.addEventListener('click', () => {
+    modalOpciones.style.display = 'none';
+    if (diaSeleccionadoModal !== null) {
+      const año = fecha.getFullYear();
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const dia = diaSeleccionadoModal.toString().padStart(2, '0');
+      const clave = `mood-${año}-${mes}-${dia}`;
+
+      if (confirm("¿Seguro quieres eliminar esta nota?")) {
+        localStorage.removeItem(clave);
+        alert("Nota eliminada");
+        diaSeleccionadoModal = null;
+        generarCalendario(fecha);
+      }
+    }
+  });
+
+  generarCalendario(fecha);
+</script>
 </body>
 </html>
