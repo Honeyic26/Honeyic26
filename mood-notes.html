@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="fondo-notes">
+  <!-- Dentro del body -->
+
+<!-- Pantalla de escribir -->
+<div id="pantallaEscribir" class="contenedor-notes">
+  <div id="info-emoji-hora">
+    <img id="emoji-img" src="" alt="Emoji" class="emoji-icon">
+    <span id="emoji-nombre"></span> - - -<span id="hora-actual"></span>
+  </div>
+  <div id="editable-note" class="editable" contenteditable="true" data-placeholder="Haz clic aquí para escribir..."></div>
+
+  <button id="btnGuardarNota">Guardar</button>
+</div>
+
+<!-- Pantalla del resultado final -->
+<div id="pantallaResultado" class="contenedor-notes" style="display: none;">
+  <div id="info-emoji-hora-resultado">
+    <img id="emoji-img-resultado" src="" alt="Emoji" class="emoji-icon">
+    <span id="emoji-nombre-resultado"></span> - <span id="hora-actual-resultado"></span>
+  </div>
+
+  <div id="editable-note-resultado" class="editable" contenteditable="true"></div>
+
+  <!-- Botón de menú ⋮ -->
+<button id="btnMenuOpciones">⁝</button>
+<div id="menuOpciones">
+  <button id="editar">Editar</button>
+  <button id="eliminar">Eliminar</button>
+</div>
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const dia = params.get('dia') || localStorage.getItem("selectedDay");
+    let mes = params.get('mes') || (new Date()).getMonth() + 1;
+    let anio = params.get('anio') || (new Date()).getFullYear();
+    
+    const modoEditar = params.get('editar') === 'true'; // <-- nuevo
+    
+    mes = mes.toString().padStart(2, '0');
+    const diaPad = dia.toString().padStart(2, '0');
+    
+    const claveNota = `mood-${anio}-${mes}-${diaPad}`;
+    
+    const emojiImg = document.getElementById('emoji-img');
+    const emojiNombreSpan = document.getElementById('emoji-nombre');
+    const horaSpan = document.getElementById('hora-actual');
+    const editableNote = document.getElementById('editable-note');
+    const btnGuardar = document.getElementById('btnGuardarNota');
+    
+    const btnMenuOpciones = document.getElementById('btnMenuOpciones');
+    const menuOpciones = document.getElementById('menuOpciones');
+    const btnEditar = document.getElementById('editar');
+    const btnEliminar = document.getElementById('eliminar');
+    
+    const nombresEmojis = {
+      "feliz.png": "Feliz",
+      "triste.png": "Triste",
+      "enojado.png": "Enojado",
+      "sorprendido.png": "Sorprendido",
+      "angustiado.png": "Angustiado",
+      "neutral.png": "Neutral",
+      "chiveado.png": "Chiveado",
+      "nervioso.png": "Nervioso",
+      "asustado.png": "Asustado"
+    };
+    
+    let modoResultado = false;
+    
+    const moodJSON = localStorage.getItem(claveNota);
+    let emojiArchivo = params.get('emoji');
+    
+    if (!emojiArchivo && moodJSON) {
+      const moodData = JSON.parse(moodJSON);
+      emojiArchivo = moodData.emoji;
+    }
+    if (!emojiArchivo) emojiArchivo = "neutral.png";
+    
+    emojiImg.src = `Imagenes/${emojiArchivo}`;
+    emojiImg.alt = nombresEmojis[emojiArchivo] || "Emoji";
+    emojiNombreSpan.textContent = nombresEmojis[emojiArchivo] || "Neutral";
+    
+    if (modoEditar) {
+      // Modo edición forzado aunque haya nota guardada
+      modoResultado = false;
+      if (moodJSON) {
+        const moodData = JSON.parse(moodJSON);
+        editableNote.textContent = moodData.note || moodData.nota || '';
+      } else {
+        editableNote.textContent = '';
+      }
+      editableNote.setAttribute('contenteditable', 'true');
+      btnGuardar.style.display = 'inline-block';
+      btnMenuOpciones.style.display = 'none';
+      const now = new Date();
+      horaSpan.textContent = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    } else if (params.get('emoji')) {
+      // Modo creación / edición inicial
+      modoResultado = false;
+      editableNote.textContent = '';
+      editableNote.setAttribute('contenteditable', 'true');
+      btnGuardar.style.display = 'inline-block';
+      btnMenuOpciones.style.display = 'none';
+      
+      localStorage.setItem('selectedEmoji', emojiArchivo);
+      localStorage.setItem('selectedDay', dia);
+      
+      const now = new Date();
+      horaSpan.textContent = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+      
+    } else if (moodJSON) {
+      // Modo visualización nota guardada
+      modoResultado = true;
+      const moodData = JSON.parse(moodJSON);
+      editableNote.textContent = moodData.note || moodData.nota || '';
+      editableNote.setAttribute('contenteditable', 'false');
+      btnGuardar.style.display = 'none';
+      btnMenuOpciones.style.display = 'inline-block';
+      horaSpan.textContent = moodData.hora || "--:--";
+    } else {
+      // Sin nota, modo edición limpio
+      modoResultado = false;
+      editableNote.textContent = '';
+      editableNote.setAttribute('contenteditable', 'true');
+      btnGuardar.style.display = 'inline-block';
+      btnMenuOpciones.style.display = 'none';
+      emojiNombreSpan.textContent = "Neutral";
+      horaSpan.textContent = "--:--";
+    }
+    
+    btnGuardar.addEventListener('click', () => {
+      const texto = editableNote.innerText.trim();
+      if (!texto) return alert("No puedes guardar una nota vacía");
+      
+      const emojiGuardado = localStorage.getItem('selectedEmoji') || 'neutral.png';
+      const diaGuardado = localStorage.getItem('selectedDay') || dia;
+      
+      const now = new Date();
+      const horaActual = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+      
+      const dataGuardar = {
+        emoji: emojiGuardado,
+        note: texto,
+        hora: horaActual
+      };
+      
+      const claveGuardar = `mood-${anio}-${mes}-${diaGuardado.toString().padStart(2, '0')}`;
+      
+      localStorage.setItem(claveGuardar, JSON.stringify(dataGuardar));
+      
+      alert("Nota guardada!");
+      window.location.href = 'mood.html'; // Regresa al calendario
+    });
+    
+    btnMenuOpciones.addEventListener('click', () => {
+      menuOpciones.style.display = menuOpciones.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    btnEditar.addEventListener('click', () => {
+      editableNote.setAttribute('contenteditable', 'true');
+      editableNote.focus();
+      btnGuardar.style.display = 'inline-block';
+      menuOpciones.style.display = 'none';
+    });
+    
+    btnEliminar.addEventListener('click', () => {
+      if (confirm("¿Seguro quieres eliminar esta nota?")) {
+        localStorage.removeItem(claveNota);
+        alert("Nota eliminada");
+        window.location.href = 'mood.html';
+      }
+    });
+  });
+</script>
+
+
+</body>
+</html>
